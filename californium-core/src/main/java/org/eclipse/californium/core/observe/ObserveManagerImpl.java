@@ -34,7 +34,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * them.
  */
 //TODO: find a better name... how about ObserveObserver -.-
-public interface ObserveManager {
+public class ObserveManagerImpl implements ObserveManager{
+
+	/** The mapping from endpoint addresses to ObservingEndpoints */
+	private final ConcurrentHashMap<InetSocketAddress, ObservingEndpoint> endpoints;
+	
+	/**
+	 * Constructs a new ObserveManager for this server.
+	 */
+	public ObserveManagerImpl() {
+		endpoints = new ConcurrentHashMap<InetSocketAddress, ObservingEndpoint>();
+	}
 	
 	/**
 	 * Find the ObservingEndpoint for the specified endpoint address or create
@@ -43,7 +53,12 @@ public interface ObserveManager {
 	 * @param address the address
 	 * @return the ObservingEndpoint for the address
 	 */
-	public ObservingEndpoint findObservingEndpoint(InetSocketAddress address);
+	public ObservingEndpoint findObservingEndpoint(InetSocketAddress address) {
+		ObservingEndpoint ep = endpoints.get(address);
+		if (ep == null)
+			ep = createObservingEndpoint(address);
+		return ep;
+	}
 	
 	/**
 	 * Return the ObservingEndpoint for the specified endpoint address or null
@@ -52,8 +67,35 @@ public interface ObserveManager {
 	 * @param address the address
 	 * @return the ObservingEndpoint or null
 	 */
-	public ObservingEndpoint getObservingEndpoint(InetSocketAddress address);
+	public ObservingEndpoint getObservingEndpoint(InetSocketAddress address) {
+		return endpoints.get(address);
+	}
 	
-	public ObserveRelation getRelation(InetSocketAddress source, byte[] token);
+	/**
+	 * Atomically creates a new ObservingEndpoint for the specified address.
+	 * 
+	 * @param address the address
+	 * @return the ObservingEndpoint
+	 */
+	private ObservingEndpoint createObservingEndpoint(InetSocketAddress address) {
+		ObservingEndpoint ep = new ObservingEndpoint(address);
+		
+		// Make sure, there is exactly one ep with the specified address (atomic creation)
+		ObservingEndpoint previous = endpoints.putIfAbsent(address, ep);
+		if (previous != null) {
+			return previous; // and forget ep again
+		} else {
+			return ep;
+		}
+	}
+
+	public ObserveRelation getRelation(InetSocketAddress source, byte[] token) {
+		ObservingEndpoint remote = getObservingEndpoint(source);
+		if (remote!=null) {
+			return remote.getObserveRelation(token);
+		} else {
+			return null;
+		}
+	}
 	
 }

@@ -31,6 +31,7 @@ import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.observe.ObserveManager;
+import org.eclipse.californium.core.observe.ObserveManagerImpl;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.observe.ObservingEndpoint;
 import org.eclipse.californium.core.server.resources.Resource;
@@ -47,16 +48,28 @@ public class ServerMessageDeliverer implements MessageDeliverer {
 	private final Resource root;
 
 	/* The manager of the observe mechanism for this server */
-	private ObserveManager observeManager = new ObserveManager();
+	private final ObserveManager observeManager;
 
 	/**
 	 * Constructs a default message deliverer that delivers requests to the
-	 * resources rooted at the specified root.
+	 * resources rooted at the specified root with an in-memory ObserveManager.
 	 * 
 	 * @param root the root resource
 	 */
 	public ServerMessageDeliverer(Resource root) {
-		this.root = root;
+	    this(root, new ObserveManagerImpl());
+	}
+	
+	/**
+     * Constructs a default message deliverer that delivers requests to the
+     * resources rooted at the specified root.
+     * 
+     * @param root the root resource
+     * @param observeManager the implementing manager of the observations.
+     */
+	public ServerMessageDeliverer(Resource root, ObserveManager observeManager){
+	    this.observeManager = observeManager;
+	    this.root = root;
 	}
 
 	/* (non-Javadoc)

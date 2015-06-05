@@ -33,6 +33,7 @@ import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.network.CoAPEndpoint;
 import org.eclipse.californium.core.network.Endpoint;
 import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.core.observe.ObserveManager;
 import org.eclipse.californium.core.server.MessageDeliverer;
 import org.eclipse.californium.core.server.ServerInterface;
 import org.eclipse.californium.core.server.ServerMessageDeliverer;
@@ -126,14 +127,38 @@ public class CoapServer implements ServerInterface {
 	}
 	
 	/**
+     * Constructs a server with the specified configuration that listens to the
+     * specified ports after method {@link #start()} is called.
+     *
+     * @param config the configuration, if <code>null</code> the configuration returned by
+     * {@link NetworkConfig#getStandard()} is used.
+     * @param ports the ports to bind to
+     */
+	public CoapServer(NetworkConfig config, int... ports) {
+	    this(config, null, ports);
+	}
+	
+	/**
+     * Constructs a server with the specified configuration that listens to the
+     * specified ports after method {@link #start()} is called.
+     *
+     * @param observeManager the implementing manager of observations.
+     * @param ports the ports to bind to
+     */
+    public CoapServer(ObserveManager observeManager, int... ports) {
+        this(NetworkConfig.getStandard(), observeManager, ports);
+    }
+	
+	/**
 	 * Constructs a server with the specified configuration that listens to the
 	 * specified ports after method {@link #start()} is called.
 	 *
 	 * @param config the configuration, if <code>null</code> the configuration returned by
 	 * {@link NetworkConfig#getStandard()} is used.
+	 * @param observeManager the implementing manager of observations.
 	 * @param ports the ports to bind to
 	 */
-	public CoapServer(NetworkConfig config, int... ports) {
+	public CoapServer(NetworkConfig config, ObserveManager observeManager, int... ports) {
 		
 		// global configuration that is passed down (can be observed for changes)
 		if (config != null) {
@@ -144,7 +169,7 @@ public class CoapServer implements ServerInterface {
 		
 		// resources
 		this.root = createRoot();
-		this.deliverer = new ServerMessageDeliverer(root);
+		this.deliverer = observeManager != null ? new ServerMessageDeliverer(root, observeManager) : new ServerMessageDeliverer(root);
 		
 		CoapResource well_known = new CoapResource(".well-known");
 		well_known.setVisible(false);
