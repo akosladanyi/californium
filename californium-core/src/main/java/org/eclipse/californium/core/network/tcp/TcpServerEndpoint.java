@@ -15,6 +15,7 @@ import org.eclipse.californium.elements.tcp.ConnectionInfo;
 import org.eclipse.californium.elements.tcp.ConnectionInfo.ConnectionState;
 import org.eclipse.californium.elements.tcp.ConnectionStateListener;
 import org.eclipse.californium.elements.tcp.server.TcpServerConnector;
+import org.eclipse.californium.elements.tcp.server.ThreadSafeTcpServerConnector;
 
 public class TcpServerEndpoint extends CoAPEndpoint implements ConnectionStateListener {
 
@@ -33,6 +34,15 @@ public class TcpServerEndpoint extends CoAPEndpoint implements ConnectionStateLi
 		super(connector, config);
 		coapClientLink = new ConcurrentHashMap<InetSocketAddress, CoapClient>();
 		connector.setConnectionStateListener(this);
+	}
+	
+	/**
+	 * Instanciate a new en
+	 * @param connector
+	 * @param config
+	 */
+	public TcpServerEndpoint(final ThreadSafeTcpServerConnector connector, final NetworkConfig config) {
+		this((TcpServerConnector)connector, config);
 	}
 
 	@Override
