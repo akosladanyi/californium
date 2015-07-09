@@ -48,6 +48,7 @@ import org.eclipse.californium.core.network.stack.TokenLayer;
 import org.eclipse.californium.core.server.MessageDeliverer;
 import org.eclipse.californium.elements.Connector;
 import org.eclipse.californium.elements.RawData;
+import org.eclipse.californium.elements.RawData.MessageType;
 import org.eclipse.californium.elements.RawDataChannel;
 import org.eclipse.californium.elements.UDPConnector;
 
@@ -263,7 +264,7 @@ public class CoAPEndpoint implements Endpoint {
 			
 			started = true;
 			matcher.start();
-			final Future<?> result  =connector.start();
+			final Future<?> result = connector.start();
 			for (final EndpointObserver obs:observers)
 				obs.started(this);
 			startExecutor();
@@ -540,19 +541,24 @@ public class CoAPEndpoint implements Endpoint {
 
 		@Override
 		public void receiveData(final RawData raw) {
-			if (raw.getAddress() == null)
-				throw new NullPointerException();
-			if (raw.getPort() == 0)
-				throw new NullPointerException();
-			
-			// Create a new task to process this message
-			final Runnable task = new Runnable() {
-				@Override
-				public void run() {
-					receiveMessage(raw);
-				}
-			};
-			executeTask(task);
+			if(raw.getMessageType().equals(MessageType.COMMUNICATION)) {
+				if (raw.getAddress() == null)
+					throw new NullPointerException();
+				if (raw.getPort() == 0)
+					throw new NullPointerException();
+
+				// Create a new task to process this message
+				final Runnable task = new Runnable() {
+					@Override
+					public void run() {
+						receiveMessage(raw);
+					}
+				};
+				executeTask(task);
+			}
+			else {
+				LOGGER.finest("new Socket Event " + raw.getConnectorEvent() +  " from " + raw.getInetSocketAddress());
+			}
 		}
 		
 		/*
@@ -616,7 +622,6 @@ public class CoAPEndpoint implements Endpoint {
 				 * If necessary, add an interceptor that logs the messages,
 				 * e.g., the MessageTracer.
 				 */
-				
 				for (final MessageInterceptor interceptor:interceptors)
 					interceptor.receiveResponse(response);
 
