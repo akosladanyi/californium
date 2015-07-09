@@ -48,7 +48,6 @@ import org.eclipse.californium.core.network.stack.TokenLayer;
 import org.eclipse.californium.core.server.MessageDeliverer;
 import org.eclipse.californium.elements.Connector;
 import org.eclipse.californium.elements.RawData;
-import org.eclipse.californium.elements.RawData.MessageType;
 import org.eclipse.californium.elements.RawDataChannel;
 import org.eclipse.californium.elements.UDPConnector;
 
@@ -541,24 +540,19 @@ public class CoAPEndpoint implements Endpoint {
 
 		@Override
 		public void receiveData(final RawData raw) {
-			if(raw.getMessageType().equals(MessageType.COMMUNICATION)) {
-				if (raw.getAddress() == null)
-					throw new NullPointerException();
-				if (raw.getPort() == 0)
-					throw new NullPointerException();
+			if (raw.getAddress() == null)
+				throw new NullPointerException();
+			if (raw.getPort() == 0)
+				throw new NullPointerException();
 
-				// Create a new task to process this message
-				final Runnable task = new Runnable() {
-					@Override
-					public void run() {
-						receiveMessage(raw);
-					}
-				};
-				executeTask(task);
-			}
-			else {
-				LOGGER.finest("new Socket Event " + raw.getConnectorEvent() +  " from " + raw.getInetSocketAddress());
-			}
+			// Create a new task to process this message
+			final Runnable task = new Runnable() {
+				@Override
+				public void run() {
+					receiveMessage(raw);
+				}
+			};
+			executeTask(task);
 		}
 		
 		/*
